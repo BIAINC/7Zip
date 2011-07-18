@@ -1,0 +1,29 @@
+===================================================================================================================================
+CONFIGURE STEP:
+===================================================================================================================================
+ 
+ !!!!! NOTE: No configuration required !!!!!
+ 
+
+===================================================================================================================================
+BUILD STEP:
+===================================================================================================================================
+
+!!!!! NOTE: Don't check in any new files that were created during build to this repository; !!!!!
+!!!!!       only check in binaries and changed include files to DBot external sub-repo      !!!!!
+
+ 1. Open Visual Studio Solution file i.e. 7Zip\7zip_4_65\CPP\7zip\Archive\7z\7z.sln
+ 2. Build all of the configurations
+ 3. If required, copy include directories from include to build, as well as release and debug versions of libraries from
+		- .\7Zip\7zip_4_65\lib
+
+
+===================================================================================================================================
+BIA CODE CHANGES:
+===================================================================================================================================
+
+ 1. Look at history for previous version of 7Zip to see what files might have changed
+ 2. Merge those changes with the new version
+
+  CURRENTLY CHANGED FILES (What we can remember from previous move of repos):
+  - Located in 7Zip\BIA_CHANGES
