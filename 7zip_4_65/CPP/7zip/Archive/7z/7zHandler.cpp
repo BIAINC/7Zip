@@ -455,6 +455,7 @@ STDMETHODIMP CHandler::Close()
   COM_TRY_BEGIN
   _inStream.Release();
   _db.Clear();
+  _newDB.Clear();
   return S_OK;
   COM_TRY_END
 }
