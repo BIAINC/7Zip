@@ -36,6 +36,8 @@ CHandler::CHandler()
 {
   _crcSize = 4;
   _totalPackSize = 0;
+  _recoveredFileCount = 0;
+  _recoveredUncompressedFileSize = 0;
 
   #ifndef _NO_CRYPTO
   _passwordIsDefined = false;

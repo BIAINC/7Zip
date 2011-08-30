@@ -744,9 +744,13 @@ HRESULT CHandler::UpdateRecoveryData()
 
 HRESULT CHandler::OpenWithRecoveryData(UString& recoveryFileName,
     COutMultiVolStream *outStream,
-	CObjectVector<UString> &filterDirs)
+	CObjectVector<UString> &filterDirs,
+	UString& itemStatFilter)
 {
   COM_TRY_BEGIN
+
+  _recoveredFileCount = 0;
+  _recoveredUncompressedFileSize = 0;
 
   if (NULL != _archive.SeqStream)
 	  return S_FALSE;
@@ -846,6 +850,21 @@ HRESULT CHandler::OpenWithRecoveryData(UString& recoveryFileName,
     // We only add full records
     if (recoveryStream.eof())
       break;
+
+	// Count recovered stats info
+    for (int currentFileItem = 0; currentFileItem < files.Size(); ++currentFileItem)
+    {
+      UString name(files[currentFileItem].Name);
+      if (files[currentFileItem].Name.Left(itemStatFilter.Length()) == itemStatFilter)
+      {
+        ++_recoveredFileCount;
+
+        for (int currFolder = 0; currFolder < folders.Size(); ++currFolder)
+        {
+          _recoveredUncompressedFileSize += folders[currFolder].GetUnpackSize();
+        }
+      }
+    }
 
     // Add new record
     for (int currStartPos = 0; currStartPos < startPos.Defined.Size(); ++currStartPos)
@@ -963,6 +982,16 @@ unsigned long long CHandler::GetFileCount()
 unsigned long long CHandler::GetTotalPackSize()
 {
   return _totalPackSize;
+}
+
+unsigned long long CHandler::GetRecoveredFileCount()
+{
+  return _recoveredFileCount;
+}
+
+unsigned long long CHandler::GetRecoveredUncompressedFileSize()
+{
+  return _recoveredUncompressedFileSize;
 }
 
 STDMETHODIMP CHandler::UpdateItems(ISequentialOutStream *outStream, UInt32 numItems,

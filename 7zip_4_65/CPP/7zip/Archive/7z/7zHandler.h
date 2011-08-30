@@ -105,10 +105,13 @@ public:
   HRESULT MoveItemToTrash(UString &path);
   HRESULT OpenWithRecoveryData(UString& recoveryFileName,
     COutMultiVolStream *outStream,
-    CObjectVector<UString> &filterDirs);
+    CObjectVector<UString> &filterDirs,
+	UString& itemStatFilter);
   HRESULT SetRecoveryOption(UString& recoveryFileName);
   unsigned long long GetFileCount();
   unsigned long long GetTotalPackSize();
+  unsigned long long GetRecoveredFileCount();
+  unsigned long long GetRecoveredUncompressedFileSize();
 
   DECL_ISetCompressCodecsInfo
 
@@ -149,6 +152,9 @@ private:
   NArchive::N7z::COutArchive _archive;
 
   unsigned long long _totalPackSize;
+
+  unsigned long long _recoveredFileCount;
+  unsigned long long _recoveredUncompressedFileSize;
 
   UString _recoveryFileName;
   std::fstream _recoveryStreamOut;
