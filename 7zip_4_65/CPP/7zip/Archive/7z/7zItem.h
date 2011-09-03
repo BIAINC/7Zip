@@ -136,6 +136,8 @@ struct CFileItem
   UInt32 Crc;
   UString Name;
 
+  Int64 RecoveryRecordPos;
+
   bool HasStream; // Test it !!! it means that there is
                   // stream in some folder. It can be empty stream
   bool IsDir;

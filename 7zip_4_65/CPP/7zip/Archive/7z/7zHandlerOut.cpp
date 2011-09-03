@@ -210,12 +210,33 @@ HRESULT CHandler::MoveItemToTrash(UString &path)
 {
   COM_TRY_BEGIN
 
+  if (!_recoveryStreamOut.is_open())
+    return E_FAIL;
+
   for (int i = 0; i < _newDB.Files.Size(); i++)
   {
     if (path == _newDB.Files[i].Name)
 	{
       if(_newDB.Files.Size() > i)
+	  {
+        // Rename the folder path
 	    _newDB.Files[i].Name = kTrashFolderName + path;
+
+        // Erase recovery record starting from this position
+        Int64 currentEndOfRecoveryRecord = _recoveryStreamOut.tellp();
+        // Erase everything from this point on
+        if (currentEndOfRecoveryRecord > _newDB.Files[i].RecoveryRecordPos
+            && _newDB.Files[i].RecoveryRecordPos > 0)
+        {
+          _recoveryStreamOut.seekp(_newDB.Files[i].RecoveryRecordPos);
+          size_t emptySize = (size_t)(currentEndOfRecoveryRecord - _newDB.Files[i].RecoveryRecordPos);
+          char* emptyChars = (char*)malloc(emptySize);
+          memset(emptyChars, 0, emptySize);
+          _recoveryStreamOut.write(emptyChars, emptySize);
+          _recoveryStreamOut.flush();
+          _recoveryStreamOut.seekp(_newDB.Files[i].RecoveryRecordPos);
+        }
+	  }
 
       return S_OK;
 	}
@@ -724,6 +745,12 @@ HRESULT CHandler::UpdateRecoveryData()
   if (!_recoveryStreamOut.is_open())
     return S_FALSE;
 
+  // Update start of recovery position for the item in the recovery file
+  if (_recoveryIndex.lastRecoveryFilesIndexToUpdate < _newDB.Files.Size())
+  {
+    _newDB.Files[_recoveryIndex.lastRecoveryFilesIndexToUpdate].RecoveryRecordPos = _recoveryStreamOut.tellp();
+  }
+
   WriteRecoveryStartPosData();
   WriteRecoveryCTimeData();
   WriteRecoveryMTimeData();
@@ -1218,8 +1245,9 @@ STDMETHODIMP CHandler::UpdateItems(ISequentialOutStream *outStream, UInt32 numIt
 	  int index = _newDB.Files.Size() - 1;
 	  if (index >= 0 && index < _newDB.Files.Size() )
 	  {
-		  if (prop.uhVal.QuadPart == _newDB.Files[index].Size)
-			  UpdateRecoveryData();
+        _newDB.Files[index].RecoveryRecordPos = 0;
+        if (prop.uhVal.QuadPart == _newDB.Files[index].Size)
+          UpdateRecoveryData();
 	  }
   }
   
