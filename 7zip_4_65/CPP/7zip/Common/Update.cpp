@@ -216,7 +216,7 @@ STDMETHODIMP COutMultiVolStream::SetSize(Int64 newSize)
     {
       CSubStreamInfo &subStream = Streams.Back();
       subStream.Stream.Release();
-      DeleteFileAlways(subStream.Name);
+      DeleteFileAlways(Streams.Size(), subStream.Name);
     }
     Streams.DeleteBack();
   }
@@ -231,7 +231,7 @@ bool COutMultiVolStream::OnNewPart(int /*partNumber*/, UString /*name*/, bool /*
   return true;
 }
 
-void COutMultiVolStream::DeleteFileAlways(UString name)
+void COutMultiVolStream::DeleteFileAlways(int /*partNumber*/, UString name)
 {
   NDirectory::DeleteFileAlways(name);
 }

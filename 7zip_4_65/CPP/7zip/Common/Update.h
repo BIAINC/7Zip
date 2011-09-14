@@ -32,7 +32,7 @@ protected:
   CObjectVector<CSubStreamInfo> Streams;
 
   virtual bool OnNewPart(int partNumber, UString name, bool open = false);
-  virtual void DeleteFileAlways(UString name);
+  virtual void DeleteFileAlways(int partNumber, UString name);
   virtual bool IsValidNonExistentPart(int partNumber);
 public:
   virtual ~COutMultiVolStream() {}
