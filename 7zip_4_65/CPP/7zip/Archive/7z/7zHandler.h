@@ -106,7 +106,8 @@ public:
   HRESULT OpenWithRecoveryData(UString& recoveryFileName,
     COutMultiVolStream *outStream,
     CObjectVector<UString> &filterDirs,
-	UString& itemStatFilter);
+	UString& itemStatFilter,
+	UString& cocEntryFilter);
   HRESULT SetRecoveryOption(UString& recoveryFileName);
   unsigned long long GetFileCount();
   unsigned long long GetTotalPackSize();

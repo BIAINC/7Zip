@@ -772,7 +772,8 @@ HRESULT CHandler::UpdateRecoveryData()
 HRESULT CHandler::OpenWithRecoveryData(UString& recoveryFileName,
     COutMultiVolStream *outStream,
 	CObjectVector<UString> &filterDirs,
-	UString& itemStatFilter)
+	UString& itemStatFilter,
+	UString& cocEntryFilter)
 {
   COM_TRY_BEGIN
 
@@ -785,6 +786,20 @@ HRESULT CHandler::OpenWithRecoveryData(UString& recoveryFileName,
   std::ifstream recoveryStream(recoveryFileName, std::ios::binary);
   if (!recoveryStream.is_open())
     return E_FAIL;
+
+  // Last coc index is used to exclude all items
+  // that were written without a valid Coc entry
+  int lastCocStartPosSize = 0;
+  int lastCocCTimeSize = 0;
+  int lastCocMTimeSize = 0;
+  int lastCocATimeSize = 0;
+  int lastCocPackCRCsDefinedSize = 0;
+  int lastCocPackCRCsSize = 0;
+  int lastCocFilesSize = 0;
+  int lastCocFoldersSize = 0;
+  int lastCocPackSizesSize = 0;
+  int lastCocNumUnpackStreamsVectorSize = 0;
+  int lastCocIsAntiSize = 0;
 
   // 7-ZIP RECOVERY SIGNATURE ( 4 Bytes )
   // =============================================
@@ -881,7 +896,6 @@ HRESULT CHandler::OpenWithRecoveryData(UString& recoveryFileName,
 	// Count recovered stats info
     for (int currentFileItem = 0; currentFileItem < files.Size(); ++currentFileItem)
     {
-      UString name(files[currentFileItem].Name);
       if (files[currentFileItem].Name.Left(itemStatFilter.Length()) == itemStatFilter)
       {
         ++_recoveredFileCount;
@@ -933,8 +947,40 @@ HRESULT CHandler::OpenWithRecoveryData(UString& recoveryFileName,
     for (int currFolders = 0; currFolders < folders.Size(); ++currFolders)
       _newDB.Folders.Add(folders[currFolders]);
 
-    validRecoveryStreamEndPos = recoveryStream.tellg().seekpos();
+    // See if we have a coc entry in which case, we have a good non-corrupted entry
+    // and only in that case update the indexes and recovery stream end positions
+    if (files.Size() && 
+        files[files.Size() - 1].Name.Left(cocEntryFilter.Length()) == cocEntryFilter)
+    {
+      lastCocStartPosSize = _newDB.StartPos.Defined.Size();
+      lastCocCTimeSize = _newDB.CTime.Defined.Size();
+      lastCocMTimeSize = _newDB.MTime.Defined.Size();
+      lastCocATimeSize = _newDB.ATime.Defined.Size();
+      lastCocPackCRCsDefinedSize = _newDB.PackCRCsDefined.Size();
+      lastCocPackCRCsSize = _newDB.PackCRCs.Size();
+      lastCocFilesSize = _newDB.Files.Size();
+      lastCocFoldersSize = _newDB.Folders.Size();
+      lastCocPackSizesSize = _newDB.PackSizes.Size();
+      lastCocNumUnpackStreamsVectorSize = _newDB.NumUnpackStreamsVector.Size();
+      lastCocIsAntiSize = _newDB.IsAnti.Size();
+
+      validRecoveryStreamEndPos = recoveryStream.tellg().seekpos();
+    }
   }
+
+  // Now remove everything from _newDB that wasn't followed by a COC entry which means
+  // that an operation has been interrupted and therefore can not be considered complete
+  _newDB.StartPos.Defined.DeleteFrom(lastCocStartPosSize);
+  _newDB.CTime.Defined.DeleteFrom(lastCocCTimeSize);
+  _newDB.MTime.Defined.DeleteFrom(lastCocMTimeSize);
+  _newDB.ATime.Defined.DeleteFrom(lastCocATimeSize);
+  _newDB.PackCRCsDefined.DeleteFrom(lastCocPackCRCsDefinedSize);
+  _newDB.PackCRCs.DeleteFrom(lastCocPackCRCsSize);
+  _newDB.Files.DeleteFrom(lastCocFilesSize);
+  _newDB.Folders.DeleteFrom(lastCocFoldersSize);
+  _newDB.PackSizes.DeleteFrom(lastCocPackSizesSize);
+  _newDB.NumUnpackStreamsVector.DeleteFrom(lastCocNumUnpackStreamsVectorSize);
+  _newDB.IsAnti.DeleteFrom(lastCocIsAntiSize);
 
   recoveryStream.close();
   _recoveryFileName = recoveryFileName;
